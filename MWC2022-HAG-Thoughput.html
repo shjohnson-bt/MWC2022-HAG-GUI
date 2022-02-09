@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+
+<!--
+GSMA ZTC WG MPTCP HAG throughput display graphs developed for Mobile World Congress 2022
+
+Authors: BT and Tessares
+Date: 09.02.2022 
+-->
+
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>GSMA ZTC Dashboard</title>
+ 
+  <link rel="stylesheet" href="style.css">
+ 
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
+
+  <script type="text/javascript" src="graphs.js"></script>
+</head>
+
+<body>
+<div style="display: block;">
+
+<header>
+	<img src="img/gsma.png" style="float: left; height:100px;" alt="GSMA logo">
+	<div class="flex" style="margin-top: 30px;">
+		<span style="font-size: 30px;" >Zero Touch Connectivity</span>
+		<img style="height: 55px; margin-bottom: 10px;" src="img/ztc.png" alt="ZTC logo">
+	</div>
+</header>
+
+<!-- Graphs -->
+<section>
+	<div id="line_chart" style="float:left; margin:30px 10px 30px 20px; width: 65%; height: 500px;"></div>
+	
+	<div style="display: block; margin:30px 20px 30px 10px; height: 500px; background-color: #2d2d2d;">
+		<div id="pie_chart" style="height: 400px; width: 365px;"></div>	
+        <div id="controls" class="controls">		
+			<div class="circle tooltip" onclick="stopStartGraph()">
+				<div id="playImage">
+					<img src="img/stop.png" class="stop">
+				</div>
+				<span class="tooltiptext" id="playTooltTip">Pause graph update</span>
+			</div>
+			<div id="devices" class="devices">
+			  <input type="checkbox" id="device1" class="checkbox" onclick="selectDevice(1)" checked>
+			  <label for="device1" id="lab1"> Device 1</label><br>
+			  <input type="checkbox" id="device2" class="checkbox" onclick="selectDevice(2)" checked>
+			  <label for="device2" id="lab2"> Device 2</label><br>
+			</div>
+		</div>
+	</div>
+</section>
+
+<footer>
+	<div class="flex">
+		<img src="img/Xiaomi.png" style="height: 40px;"  alt="Xiaomi logo">
+		<img src="img/logo_tessares.svg" alt="Tessares logo">
+		<img src="img/dt.png" alt="DT logo">
+		<img src="img/vodafone.png" style="height: 37px;" alt="Vodafone logo">
+		<img src="img/bt-white.png" style="height: 42px;" alt="BT logo">
+		<img src="img/telefonica-logo-azul.png" style="height: 48px;" alt="Telefonica logo">
+		<img src="img/stc.png" alt="STC logo">
+		<img src="img/orange.png" style="height: 44px;" alt="Orange logo">
+	</div>
+</footer>
+
+</div>
+
+</body>
+</html>
