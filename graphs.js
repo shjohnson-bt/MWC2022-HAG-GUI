@@ -108,8 +108,7 @@ function getAllData()
 }
 
 //
-// Retreive data from HAG, process and update graphs 
-// if data from both HAGs recieved
+// Retreive data from HAG, process and update graphs if data from both HAGs recieved
 //
 function getData(index) {
   if(index > urls.length - 1) 
@@ -144,7 +143,7 @@ function bytesToMbits(bytes) {
 }
 
 //
-// Process the data from HAG e.g. update history and graph (if required)
+// Process the data from HAG e.g. update history
 //
 function processData(index,fetched) {
   if (typeof fetched !== 'undefined'){
@@ -203,7 +202,7 @@ function makeRatio(dataArray) {
 // Update:
 //   - individual HAG history
 //   - calculate Mbps and store
-//   - update combinde graph history/Mbps
+//   - update combined graph history/Mbps
 //
 function updateData(index, sec, wifi, cell) {
  
@@ -319,15 +318,9 @@ function selectDevice(sel) {
 		graphSelection = 0;
 	}
 	
-	if(dev1.checked) 
-	{
-		document.querySelector('#lab1').style.color = "White";
-		document.querySelector('#device1').style.background = "White";
-	}
-	else {
-		document.querySelector('#lab1').style.color = "Grey";
-		document.querySelector('#device1').style.background = "Grey";
-	}
+	if(dev1.checked) document.querySelector('#lab1').style.color = "White";
+	else document.querySelector('#lab1').style.color = "Grey";
+
 	if(dev2.checked) document.querySelector('#lab2').style.color = "White";
 	else document.querySelector('#lab2').style.color = "Grey";
 	
