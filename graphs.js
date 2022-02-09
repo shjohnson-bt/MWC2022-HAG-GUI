@@ -242,7 +242,7 @@ function updateData(index, sec, wifi, cell) {
 	  totals.Mbps[totals.Mbps.length-1][2] += cellMbps;
 	  //console.log("total="+totals.Mbps[totals.Mbps.length-1][1]);
 	  
-      if (totals.Mbps.length >= maxWindow) {
+      if (totals.Mbps.length > maxWindow) {
 	    totals.Mbps.shift(); // This removes the header line, being the first element
 		// restore header on top of oldest data value 
 		totals.Mbps.splice(0,1,['Time', 'Wi-Fi', 'Cellular']);
