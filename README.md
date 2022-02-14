@@ -5,7 +5,8 @@ This UI combines the throughput data from two HAGs and displays this as a realti
 
 **Installation:**
 - Copy the files to the local filing system on the device that will be displaying the GUI. Ensure that the file directory heirarchy is maintained.
-- Update the HAG urls and associated ports at the top of the file `graphs.js`
+- Update the HAG urls and associated ports at the top of the file `defaults.js`
+- Chart text and colours can also be modified in `defaults.js`
 
 **Running:**
 - Open the file `MWC2022-HAG-Thoughput.html` in the local web browser (only MS Edge tested)
