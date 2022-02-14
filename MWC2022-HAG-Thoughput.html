@@ -4,7 +4,7 @@
 GSMA ZTC WG MPTCP HAG throughput display graphs developed for Mobile World Congress 2022
 
 Authors: BT and Tessares
-Date: 09.02.2022 
+Date: 4.02.2022 
 -->
 
 <html lang="en">
@@ -19,10 +19,11 @@ Date: 09.02.2022
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
 
+  <script type="text/javascript" src="defaults.js"></script>
   <script type="text/javascript" src="graphs.js"></script>
 </head>
 
-<body>
+<body onload="initialise()">
 <div style="display: block;">
 
 <header>
@@ -46,11 +47,11 @@ Date: 09.02.2022
 				</div>
 				<span class="tooltiptext" id="playTooltTip">Pause graph update</span>
 			</div>
-			<div id="devices" class="devices">
-			  <input type="checkbox" id="device1" class="checkbox" onclick="selectDevice(1)" checked>
-			  <label for="device1" id="lab1"> Device 1</label><br>
-			  <input type="checkbox" id="device2" class="checkbox" onclick="selectDevice(2)" checked>
-			  <label for="device2" id="lab2"> Device 2</label><br>
+			<div id="hags" class="hags">
+			  <input type="checkbox" id="hag1" class="checkbox" onclick="selectHag(1)" checked>
+			  <label for="hag1" id="lab1"></label><br>
+			  <input type="checkbox" id="hag2" class="checkbox" onclick="selectHag(2)" checked>
+			  <label for="hag2" id="lab2"></label><br>
 			</div>
 		</div>
 	</div>
