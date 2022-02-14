@@ -28,7 +28,7 @@ var hag1 = {raw: [], Mbps: [hagChartHeader]};
 var hag2 = {raw: [], Mbps: [hagChartHeader]};
 var totals = {Mbps: [totalsChartHeader]};
 
-//
+// Set to true when we can start updating the charts
 var chartsLoaded = false;
 
 //
