@@ -28,7 +28,7 @@ var hag1 = {raw: [], Mbps: [hagChartHeader]};
 var hag2 = {raw: [], Mbps: [hagChartHeader]};
 var totals = {Mbps: [totalsChartHeader]};
 
-// Set to true when we can start updating the charts
+//
 var chartsLoaded = false;
 
 //
@@ -81,6 +81,7 @@ var optionsPie = {
 	fontSize: 20
   },
   legend: { 
+    alignment: 'center',
 	position: 'top',
 	textStyle: {color: 'white'}
   },
@@ -177,6 +178,8 @@ function drawPieChart(dataArray) {
   var ratio1 = 0;
   var ratio2 = 0;
 
+  var totalsUnits = "Mbps";
+  
   var label_1 = "Wi-Fi";
   var label_2 = "Cellular";
   if(graphSelection == 2) {
@@ -185,17 +188,38 @@ function drawPieChart(dataArray) {
 	  var totals = makeTotals(dataArray);
 	  ratio1 = totals[0];
 	  ratio2 = totals[1];
+	  if(ratio1 == 0 && ratio2 == 0) {
+		  // Ensure totals chart displays something
+		  ratio1 = ratio2 = 0.01;
+		  totalsUnits = "Kbps";
+	  }
+	  else if(ratio1 < 0.1 && ratio2 < 0.1) {
+		  // Scale values for Kbps
+		  ratio1 /= 1000;
+		  ratio2 /= 1000;
+		  totalsUnits = "Kbps";
+	  }
+	  else {
+		  // Default it to display Mbps
+		  totalsUnits = "Mbps";
+	  }		  
   }
   else {
 	  ratio1 = makeRatio(dataArray);  
 	  ratio2 = 1 - ratio1;
   }
   var pies = google.visualization.arrayToDataTable([
-	['Task', 'Hours per Day'],
+	['Device', 'Throughput'],
 	[label_1, ratio1],
 	[label_2, ratio2],
   ]);
 
+  // Set units appropriately for totals graph
+  if(graphSelection == 2) {
+	  const formatter = new google.visualization.NumberFormat({suffix: totalsUnits, fractionDigits: 1});
+	  formatter.format(pies, 0);
+	  formatter.format(pies, 1);
+  }
   var chart = new google.visualization.PieChart(document.getElementById('pie_chart'));
 
   chart.draw(pies, optionsPie);
@@ -236,16 +260,17 @@ function makeRatio(dataArray) {
 }
 
 //
-// Calculate data totals for Pie chart
+// Calculate totals for Pie chart
 //
 function makeTotals(dataArray) {
   if(dataArray === 'undefined' || dataArray.length <= 1) return [0,0];
   
   const reducer1 = (accumulator, item) => { return accumulator + item[1]; };
-  var tot1 = parseFloat((dataArray.slice(1).reduce(reducer1, 0)/dataArray.length).toFixed(1));
-  const reducer2 = (accumulator, item) => { return accumulator + item[2]; };
-  var tot2 = parseFloat((dataArray.slice(1).reduce(reducer2, 0)/dataArray.length).toFixed(1));
+  var tot1 = dataArray.slice(1).reduce(reducer1, 0)/dataArray.length;
 
+  const reducer2 = (accumulator, item) => { return accumulator + item[2]; };
+  var tot2 = dataArray.slice(1).reduce(reducer2, 0)/dataArray.length;
+  
   return [tot1,tot2];
 }
 
