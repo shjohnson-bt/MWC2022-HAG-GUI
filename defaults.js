@@ -35,7 +35,7 @@ const hagPieChartStyles = [
 
 // Totals charts - combined throughput (wifi+cellular) for each hag
 const totalsLineChartTitle = "Total download throughput for each device";
-const totalsPieChartTitle = "Ave throughput (Mbps)";
+const totalsPieChartTitle = "Ave throughput";
 
 const totalsChartHeader  = ['Time', hag_label_1, hag_label_2];
 const totalsLineChartColours = ['yellow','orange'];
