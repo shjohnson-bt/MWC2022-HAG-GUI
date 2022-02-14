@@ -9,19 +9,9 @@ Date: 14.02.2022
 // HAG URLs
 //
 const urls = [
-   "http://18.132.68.91:8000/",
-   "http://18.132.68.91:8000/"
-];
-
-//"http://52.68.217.152:8000/"
-
-
-/*
-const urls = [
    "http://xxx.xxx.xxx.xxx:port/",
    "http://yyy.yyy.yyy.yyy:port/"
 ];
-*/
 
 
 //
