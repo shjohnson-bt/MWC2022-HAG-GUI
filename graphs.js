@@ -236,7 +236,7 @@ function makeRatio(dataArray) {
 }
 
 //
-// Calculate ratio of data for Pie chart
+// Calculate data totals for Pie chart
 //
 function makeTotals(dataArray) {
   if(dataArray === 'undefined' || dataArray.length <= 1) return [0,0];
