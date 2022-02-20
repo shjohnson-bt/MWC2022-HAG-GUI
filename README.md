@@ -31,7 +31,7 @@ Enabling the 'history view' can be done in the following ways:
 To move the view portal without changing the portal size, simply drag on the area between the two sliders. Additionally pan (drag) and
 zoom (mouse wheel) is possible when the mouse is over the main graph. This does not change the pie chart calculation or adjust the view portal size.
 
-Switching between HAGs and totals view should preseve the view portal.
+Switching between HAGs and totals view should preserve the view portal.
 
 In the 'history view' data collection from the HAGs is stopped and so the graph is not updated.  
 
