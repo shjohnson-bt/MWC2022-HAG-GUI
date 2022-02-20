@@ -2,12 +2,13 @@
 GSMA ZTC WG MPTCP HAG throughput display graphs developed for Mobile World Congress 2022
 
 Authors: BT and Tessares
-Date: 14.02.2022 
+Date: 20.02.2022 
 */
 
 //
 // HAG URLs
 //
+
 const urls = [
    "http://xxx.xxx.xxx.xxx:port/",
    "http://yyy.yyy.yyy.yyy:port/"

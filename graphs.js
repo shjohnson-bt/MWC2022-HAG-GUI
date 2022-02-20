@@ -2,9 +2,12 @@
 GSMA ZTC WG MPTCP HAG throughput display graphs developed for Mobile World Congress 2022
 
 Authors: BT and Tessares
-Date: 14.02.2022 
+Date: 20.02.2022 
 */
 
+///////////////////////////////////////////////////////////////////////////////////
+// Constants and variable declaration/definition
+//////////////////////////////////////////////////////////////////////////////////
 
 // Display refresh - used for pausing display
 var refreshEnabled = 1;
@@ -20,93 +23,158 @@ var graphSelection = 2;
 // Period with which to retreive throughput data in ms
 const samplePeriodMs = 1000;
 
-// Max samples to display @ 1 sample/second
-const maxWindow = 120;
+// Max number of samples to store ~ 1 sample per second
+const maxWindowSamples = 60*60;
+
+// Minimum 'zoom-in' window size in milliseconds 
+const minWindowSizeMs = 20*samplePeriodMs;
+
+// Window size in ms during live updates
+const liveWindowSizeMs = 2*60*samplePeriodMs;
 
 // Variables to store sample history for each HAG as well as combined history
-var hag1 = {raw: [], Mbps: [hagChartHeader]};
-var hag2 = {raw: [], Mbps: [hagChartHeader]};
-var totals = {Mbps: [totalsChartHeader]};
+var hag1, hag2, totals;
+
+// Google chart objects
+var dashboard, chartSliderWrapper, lineChartWrapper;
 
 //
 var chartsLoaded = false;
 
-//
-// Line graph options
-//
-var optionsLine = { 
-  chartArea: { 
-	left: 50,
-	width: '90%'
-  },
-  title: totalsLineChartTitle,
-  titleTextStyle: {
-	color: 'white',
-	fontSize: 20
-  },
-  colors: totalsLineChartColours,
-  backgroundColor: '#2d2d2d',
-  legend: { 
-	position: 'top',
-	alignment: 'end',
-	textStyle: {color: 'white'}
-  },
-  hAxis: {
-	title: 'Time [mm:ss]',
-	titleTextStyle: {color: 'white'},
-	format: 'mm:ss',
-	textStyle: {color: 'white'},
-	gridlines: {
-	  color: 'white',
-	  count: 10,
-	}
-  },
-  vAxis: {
-	title: "Mbps",
-	titleTextStyle: {color: 'white'},
-	textStyle: {color: 'white'},
-	viewWindow: {
-	  min: 0,
-	},
-  }
-};
+var lastStateRange = {'start':new Date(0), 'end':new Date(0)}; 
 
-//
-// Pie chart options
-//
-var optionsPie = {
-  title: totalsPieChartTitle,
-  titleTextStyle: {
-	color: 'white',
-	fontSize: 20
-  },
-  legend: { 
-    alignment: 'center',
-	position: 'top',
-	textStyle: {color: 'white'}
-  },
-  pieSliceText: 'value',
-  backgroundColor: '#2d2d2d',
-  slices: totalsPieChartStyles
-};
+// Restrict the frequency with which PIE chart update calculations are performed
+// when invoked from the chart wrapper slider
+var nextUpdateTimeMs = Date.now();
+var updateIntervalMs = 400;
 
-// Callback to indicate we can start drawing graphs
-function chartsReadyCallback() {
-	chartsLoaded = true;
-}
+// Last HTTP request time
+var lastRequestTimeMs = 0;
+
+
+// Pre-populate data structures for testing
+const testing = false;
+
+///////////////////////////////////////////////////////////////////////////////////
+// Functions
+//////////////////////////////////////////////////////////////////////////////////
 
 //
 // body onload initialsiation function
 //
 function initialise() {
-	google.charts.load('current', {'packages':['corechart']});
+	google.charts.load('current', {'packages':['corechart', 'controls']});
 	google.charts.setOnLoadCallback(chartsReadyCallback);
 
 	document.querySelector('#lab1').innerHTML = hag_label_1;
 	document.querySelector('#lab2').innerHTML = hag_label_2;
 
-	// Start timer to retrieve HAG data
-	setInterval(getAllData, samplePeriodMs);
+	if(testing) {
+		// Populate arrays for testing
+		loadData();
+	}
+	else {
+		// Start timer to retrieve HAG data
+		setInterval(getAllData, samplePeriodMs);
+	}
+}
+
+//
+// Fill arrays with data
+// - used to speed up testing for graph behaviour with full windows 
+// 
+function loadData()
+{
+	hag1 = {raw: [], Mbps: [hagChartHeader]};
+	hag2 = {raw: [], Mbps: [hagChartHeader]};
+	totals = {raw: [], Mbps: [totalsChartHeader]};
+		
+	var thisDate;
+	var w1 = 45000;
+	var w2 = 230000;
+	var c1 = 70320;
+	var c2 = 43202;
+	
+	var startDateMs = Date.now() - 60*60*1000;
+	
+	var startDate = new Date(startDateMs);
+	hag1.raw.push([startDate, w1, c1]);
+	hag2.raw.push([startDate, w2, c2]);
+	totals.raw.push([startDate,w1+c1,w2+c2]);
+	
+	for(i=1; i<=maxWindowSamples; i++) {
+		thisDate = new Date(startDateMs + i*1000);
+		w1 += (100+20*Math.random());
+		c1 += (80+20*Math.random());
+		w2 += (80+20*Math.random());
+		c2 += 0;
+
+		hag1.raw.push([thisDate, w1, c1]);
+		hag2.raw.push([thisDate, w2, c2]);
+		totals.raw.push([thisDate,w1+c1,w2+c2]);
+
+		// 1 second interval, so don't need to divide by time
+		hag1.Mbps.push([thisDate, w1-hag1.raw[i-1][1], c1-hag1.raw[i-1][2]]);
+		hag2.Mbps.push([thisDate, w2-hag2.raw[i-1][1], c2-hag2.raw[i-1][2]]);
+		
+		totals.Mbps.push(
+			[
+			 thisDate, 
+			 (w1-hag1.raw[i-1][1]) + (c1-hag1.raw[i-1][2]),
+			 (w2-hag2.raw[i-1][1]) + (c2-hag2.raw[i-1][2])
+			]
+		);
+	}
+	
+	lastRequestTime = thisDate;
+}
+
+// Callback to indicate we can start drawing graphs
+function chartsReadyCallback() {
+	dashboard = new google.visualization.Dashboard(document.querySelector('#lc_dashboard'));
+    chartSliderWrapper = new google.visualization.ControlWrapper(controlWrapperOptions);
+    lineChartWrapper = new google.visualization.ChartWrapper(chartWrapperOptions);
+	dashboard.bind(chartSliderWrapper,lineChartWrapper);
+
+    google.visualization.events.addListener(chartSliderWrapper, 'statechange', sliderStateChangeHandler);
+
+	chartsLoaded = true;
+	
+	if(testing) drawLineChart();
+}
+
+//
+// Control wrapper slider has moved so stop graph and update pie chart if necessary
+//
+function sliderStateChangeHandler(e) {		
+	if(refreshEnabled == 1) stopStartGraph(true);
+
+    // Restrict the frequency of updates to improve performance
+    var now = Date.now();
+    if(now < nextUpdateTimeMs) return;
+	nextUpdateTimeMs = now + updateIntervalMs;
+	
+	var state = chartSliderWrapper.getState();
+	
+    if(!areEqual(state.range, lastStateRange)) {		
+	    //console.log("Different start=" + state.range.start + " end=" + state.range.end);
+
+		lastStateRange.start = state.range.start;
+		lastStateRange.end = state.range.end;
+		
+		var dataArray = getDataSet(graphSelection).raw;
+		drawPieChart(getRangeSubset(dataArray, lastStateRange.start, lastStateRange.end));
+	}
+}
+
+//
+// Determine if control wrapper slider start and end points are the same
+//
+function areEqual(range1, range2) {
+	if(Math.trunc(range1.start.getTime()/1000) != Math.trunc(range2.start.getTime()/1000)) return false;
+	if(Math.trunc(range1.end.getTime()/1000) != Math.trunc(range2.end.getTime()/1000)) return false;
+
+	return true;
 }
 
 //
@@ -114,6 +182,20 @@ function initialise() {
 //
 function getAllData()
 {
+	if((lastRequestTimeMs == 0) ||
+	   (Date.now() - lastRequestTimeMs) >  maxWindowSamples*samplePeriodMs)
+	{
+		if(lastRequestTimeMs != 0) console.log(new Date() + ": data is out of date - purging...");
+		
+		// Initialise data first time round or...
+		// browser tab might have been sleeping, so purge data
+		hag1 = {raw: [], Mbps: [hagChartHeader]};
+		hag2 = {raw: [], Mbps: [hagChartHeader]};
+		totals = {raw: [], Mbps: [totalsChartHeader]};	
+	}
+
+	lastRequestTimeMs = Date.now();
+
 	if(callbackCount == 0) {
 		getData(0);
 		getData(1);
@@ -173,41 +255,62 @@ function processData(index,fetched) {
 // Update the PIE chart
 //
 function drawPieChart(dataArray) {
-  if(chartsLoaded == false) return;
+  if(chartsLoaded == false || dataArray == null) return;
   
-  var ratio1 = 0;
-  var ratio2 = 0;
+  var ratio1, ratio2;
+  var label_1, label_2;
+  var totalsUnits;
 
-  var totalsUnits = "Mbps";
+  var volume1 = dataArray[dataArray.length-1][1] - dataArray[0][1];
+  var volume2 = dataArray[dataArray.length-1][2] - dataArray[0][2];
+
+  if(volume1 < 0 || volume2 < 0) {
+	  console.log("drawPieChart: Warning - negative data, vol1=" + volume1 + ", vol2=" + volume2 +
+		", len=" + dataArray.length);
+  }
   
-  var label_1 = "Wi-Fi";
-  var label_2 = "Cellular";
   if(graphSelection == 2) {
+	  // Total throughput for each HAG
 	  label_1 = hag_label_1;
 	  label_2 = hag_label_2;
-	  var totals = makeTotals(dataArray);
-	  ratio1 = totals[0];
-	  ratio2 = totals[1];
-	  if(ratio1 == 0 && ratio2 == 0) {
+
+      var intervalMs = dataArray[dataArray.length-1][0].getTime() - dataArray[0][0].getTime();
+	  if(intervalMs > 0) {
+		  ratio1 = 1000*volume1/intervalMs;
+		  ratio2 = 1000*volume2/intervalMs;
+	  }
+	  else {
+		  ratio1 = ratio2 = 0;
+	  }
+	  if(ratio1 < 0.0000001 && ratio2 < 0.0000001) {
 		  // Ensure totals chart displays something
 		  ratio1 = ratio2 = 0.01;
-		  totalsUnits = "Kbps";
+		  totalsUnits = "bps";
 	  }
-	  else if(ratio1 < 0.1 && ratio2 < 0.1) {
+	  else if(ratio1 < 0.00001 && ratio2 < 0.00001) {
+		  // Ensure totals chart displays something
+		  ratio1 *= 1000000;
+		  ratio2 *= 1000000;
+		  totalsUnits = "bps";
+	  }
+	  else if(ratio1 < 0.01 && ratio2 < 0.01) {
 		  // Scale values for Kbps
-		  ratio1 /= 1000;
-		  ratio2 /= 1000;
+		  ratio1 *= 1000;
+		  ratio2 *= 1000;
 		  totalsUnits = "Kbps";
 	  }
 	  else {
-		  // Default it to display Mbps
+		  // Default is to display Mbps
 		  totalsUnits = "Mbps";
-	  }		  
+ 	  }		  
   }
   else {
-	  ratio1 = makeRatio(dataArray);  
+	  label_1 = "Wi-Fi";
+	  label_2 = "Cellular";
+	  ratio1 = volume1/(volume1 + volume2);  
 	  ratio2 = 1 - ratio1;
   }
+  
   var pies = google.visualization.arrayToDataTable([
 	['Device', 'Throughput'],
 	[label_1, ratio1],
@@ -231,48 +334,101 @@ function drawPieChart(dataArray) {
 function drawLineChart() {
   if(chartsLoaded == false) return;
 
-  var dataArray = getDataSet(graphSelection).Mbps;
+  var dataSet = getDataSet(graphSelection);
 
-  if (dataArray.length > 1) {
-	var dataTable = google.visualization.arrayToDataTable(dataArray);
-	var chart = new google.visualization.AreaChart(document.getElementById('line_chart'));
-	chart.draw(dataTable, optionsLine);
- 
-	drawPieChart(dataArray);
+  if (dataSet.Mbps.length > 1) {
+	var dataTable = google.visualization.arrayToDataTable(dataSet.Mbps);
+	dashboard.draw(dataTable);
+	  
+	var start, end;
+	if(refreshEnabled == 1) {
+		// Recalculate view as data has been added
+		end = dataSet.Mbps[dataSet.Mbps.length-1][0];
+
+		// Try and ensure that the start slider is easily selectable
+		// If browser puts tab to sleep, there could be a large time interval
+		// between successive points
+		if(dataSet.Mbps.length-1 > liveWindowSizeMs/samplePeriodMs) {
+			start = dataSet.Mbps[dataSet.Mbps.length - 1 -Math.floor(liveWindowSizeMs/samplePeriodMs)][0]; 
+		}
+		else {
+			start = dataSet.Mbps[1][0];
+		}
+
+		var newState = {
+			'range': {
+				'start': start, 
+				'end': end
+			}
+		};
+		chartSliderWrapper.setState(newState);
+	}
+	else {
+		// Preserve window if switching between device and total views
+		start = lastStateRange.start;
+		end = lastStateRange.end;
+	}
+	
+	drawPieChart(getRangeSubset(dataSet.raw, start, end));
   }
 }
 
 //
-// Calculate ratio of data for Pie chart
+// Returns a subset of the array based on the start and end dates
+// - Tries to guess initial indices to minimize search through large array
 //
-function makeRatio(dataArray) {
-  if(dataArray === 'undefined' || dataArray.length <= 1) return 0;
-  
-  const red1 = (accumulator, item) => { return accumulator + item[1]; };
-  var tot1 = dataArray.slice(1).reduce(red1, 0);
-  const red2 = (accumulator, item) => { return accumulator + item[2]; };
-  var tot2 = dataArray.slice(1).reduce(red2, 0);
+function getRangeSubset(da, startDate, endDate)
+{
+	if(da.length > 1) {
+		var initialStartIndex, initialEndIndex;
+		var startIndex, endIndex;
 
-  var ratio = tot1/(tot1+tot2)
-  if (isNaN(ratio)) { ratio = 1 }
+		try {
+			// Estimate start position - assumes 1 sample per second.
+			initialStartIndex = Math.trunc((startDate.getTime() - da[1][0].getTime())/1000);
+			if(initialStartIndex <= 0) {
+				startIndex = 0;
+			}
+			else {
+				if(initialStartIndex > da.length - 1) initialStartIndex = da.length -2;
 
-  return ratio;
+				if(startDate > da[initialStartIndex][0])
+				   for(startIndex=initialStartIndex; (startIndex < da.length -1) && (startDate > da[startIndex][0]); startIndex++);
+				else
+				   for(startIndex=initialStartIndex; (startIndex > 1) && (da[startIndex][0] >= startDate); startIndex--);
+			}
+			
+			// startDate and endDates are generated using Mbps graphs, so start index must be 
+			// one sample earlier for raw data
+			if(startIndex > 0) startIndex--;
+			
+			// Estimate end position - assumes 1 sample per second.
+			initialEndIndex = (da.length-1) - Math.trunc((da[da.length-1][0].getTime() - endDate.getTime())/1000);
+			if(initialEndIndex > da.length -1) {
+				endIndex == da.length - 1;
+			}
+			else {
+				if(initialEndIndex < 1) initialEndIndex = 1;
+			
+				if(endDate > da[initialEndIndex][0])
+				   for(endIndex=initialEndIndex; (endIndex < da.length -1) && (endDate > da[endIndex][0]); endIndex++);
+				else
+				   for(endIndex=initialEndIndex; (endIndex > 1) && (da[endIndex][0] >= endDate); endIndex--);
+			}
+			
+		   	//console.log("getSubset start ind=" + startIndex + ", end ind=" + endIndex + ", length=" + da.length);
+			return da.slice(startIndex, endIndex);
+		}
+		catch(err) {
+			console.log("getRangeSubset: exception: " + err);
+			console.log("getRangeSubset: da.len=" + da.length + 
+				",iniStart=" + initialStartIndex + ", iniEnd=" + initialEndIndex +
+				",startInd=" + startIndex + ", endInd=" + endIndex);
+		}
+	}
+	return null;
 }
 
-//
-// Calculate totals for Pie chart
-//
-function makeTotals(dataArray) {
-  if(dataArray === 'undefined' || dataArray.length <= 1) return [0,0];
-  
-  const reducer1 = (accumulator, item) => { return accumulator + item[1]; };
-  var tot1 = dataArray.slice(1).reduce(reducer1, 0)/dataArray.length;
-
-  const reducer2 = (accumulator, item) => { return accumulator + item[2]; };
-  var tot2 = dataArray.slice(1).reduce(reducer2, 0)/dataArray.length;
-  
-  return [tot1,tot2];
-}
 
 //
 // Update:
@@ -297,35 +453,51 @@ function updateData(index, sec, wifi, cell) {
 	ds.Mbps.push([sec, wifiMbps, cellMbps]);
 	//console.log("index="+index+",wifiMbps="+wifiMbps);
   }
-  // Could make this more efficient as don't need to store all raw data
   ds.raw.push([sec,wifi,cell]);
+
+  // Only need last values
+  //if (ds.raw.length > 1) ds.raw.shift();
   
-  if (ds.raw.length >= maxWindow) {
-	ds.raw.shift();
+  if (ds.Mbps.length >= maxWindowSamples) {
+	ds.raw.shift()
+	  
 	ds.Mbps.shift(); // This removes the header line, being the first element
 	// restore header on top of oldest data value 
 	ds.Mbps.splice(0,1,hagChartHeader);
   }
   
-  var totalThroughput = wifiMbps + cellMbps;
   // Now update totals
+  var totalData = wifi + cell; 
   if(callbackCount == 0) {
-	  // Add totals from first HAG to respond
-	  if(index == 0) totals.Mbps.push([sec,totalThroughput,0]);
-	  else totals.Mbps.push([sec,0,totalThroughput]);
+	  if(index == 0) totals.raw.push([sec,totalData,0]);
+	  else totals.raw.push([sec,0,totalData]);
   }
   else {
-	  // Add values from second hag to previously stored above
-	  if(index == 0) totals.Mbps[totals.Mbps.length-1][1] += totalThroughput;
-	  else totals.Mbps[totals.Mbps.length-1][2] += totalThroughput;
-	  
-	  //console.log("total="+totals.Mbps[totals.Mbps.length-1][1]);
-	  
-      if (totals.Mbps.length >= maxWindow) {
-	    totals.Mbps.shift(); // This removes the header line, being the first element
-		// restore header on top of oldest data value 
-		totals.Mbps.splice(0,1,totalsChartHeader);
-      }  
+	  if(index == 0) totals.raw[totals.raw.length-1][1] += totalData;
+	  else totals.raw[totals.raw.length-1][2] += totalData;
+  }
+
+  if(ds.raw.length > 0) {
+	  var totalThroughput = wifiMbps + cellMbps; 
+
+	  if(callbackCount == 0) {
+		  // Add totals from first HAG to respond
+		  if(index == 0) totals.Mbps.push([sec,totalThroughput,0]);
+		  else totals.Mbps.push([sec,0,totalThroughput]);
+	  }
+	  else {
+		  // Add values from second hag to previously stored above
+		  if(index == 0) totals.Mbps[totals.Mbps.length-1][1] += totalThroughput;
+		  else totals.Mbps[totals.Mbps.length-1][2] += totalThroughput;
+		  
+		  //console.log("total="+totals.Mbps[totals.Mbps.length-1][1]);
+		  
+		  if (totals.Mbps.length >= maxWindowSamples) {
+			totals.Mbps.shift(); // This removes the header line, being the first element
+			// restore header on top of oldest data value 
+			totals.Mbps.splice(0,1,totalsChartHeader);
+		  }  
+	  }
   }
 }
 
@@ -351,17 +523,33 @@ function getDataSet(ind)
 //
 // Control the graph update when play/pause button pressed
 //
-function stopStartGraph() {
-  if (refreshEnabled == 1) {
+function stopStartGraph(stop) {
+  if (refreshEnabled == 1 || stop == true) {
 	refreshEnabled = 0;
-	document.querySelector('#playImage').innerHTML = '<img src="img/play.png" class="play">';
+	document.querySelector('#playImage').innerHTML = '<img src="img/play.png" class="play blink">';
 	document.querySelector('#playTooltTip').innerText = 'Start graph update';
+	
+	// Enable pan and zoom in line chart when not updating
+	lineChartWrapper.setOption('explorer.axis', 'horizontal');
+	lineChartWrapper.setOption('explorer.keepInBounds', true);
+	lineChartWrapper.setOption('explorer.maxZoomIn', 0.1);
+	lineChartWrapper.setOption('explorer.maxZoomOut', 1);
   }
   else {
 	refreshEnabled = 1;
-	document.querySelector('#playImage').innerHTML = '<img src="img/stop.png" class="stop">';
+	document.querySelector('#playImage').innerHTML = '<img src="img/pause.png" class="pause">';
 	document.querySelector('#playTooltTip').innerText = 'Pause graph update';
+
+	// Disable pan and zoom in line chart when updating	
+	lineChartWrapper.setOption('explorer', null);
   }
+}
+
+// 
+// Click event handler for graph dashboard - used to stop and start the display
+//
+function onClick() {
+	stopStartGraph();
 }
 
 //
@@ -394,15 +582,9 @@ function selectHag(sel) {
 		graphSelection = 0;
 	}
 	
-	if(hag1.checked) 
-	{
-		document.querySelector('#lab1').style.color = "White";
-		document.querySelector('#hag1').style.background = "White";
-	}
-	else {
-		document.querySelector('#lab1').style.color = "Grey";
-		document.querySelector('#hag2').style.background = "Grey";
-	}
+	if(hag1.checked) document.querySelector('#lab1').style.color = "White";
+	else document.querySelector('#lab1').style.color = "Grey";
+	
 	if(hag2.checked) document.querySelector('#lab2').style.color = "White";
 	else document.querySelector('#lab2').style.color = "Grey";
 	
@@ -416,16 +598,18 @@ function updateGraphOptions()
 	switch(graphSelection) {
 		case 0:
 		case 1:
-			optionsLine.title  = hagLineChartTitle + (graphSelection==0?hag_label_1:hag_label_2);
-			optionsLine.colors = hagLineChartColours;
+			lineChartWrapper.setOption('title', hagLineChartTitle + (graphSelection==0?hag_label_1:hag_label_2));
+			lineChartWrapper.setOption('colors', hagLineChartColours);
+			chartSliderWrapper.setOption('ui.chartOptions.colors', hagLineChartColours);
 			optionsPie.title  = (graphSelection==0?hag_label_1:hag_label_2) + hagPieChartTitle;
 			optionsPie.slices = hagPieChartStyles;
 			optionsPie.pieSliceText = "percentage";
 		    break;
 		case 2:
 		default:
-			optionsLine.title  = totalsLineChartTitle;
-			optionsLine.colors = totalsLineChartColours;
+			lineChartWrapper.setOption('title', totalsLineChartTitle);
+			lineChartWrapper.setOption('colors', totalsLineChartColours);
+			chartSliderWrapper.setOption('ui.chartOptions.colors', totalsLineChartColours);
 			optionsPie.title  = totalsPieChartTitle;
 			optionsPie.slices = totalsPieChartStyles;
 			optionsPie.pieSliceText = "value";
