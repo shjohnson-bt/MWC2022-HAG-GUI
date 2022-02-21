@@ -2,7 +2,7 @@
 GSMA ZTC WG MPTCP HAG throughput display graphs developed for Mobile World Congress 2022
 
 Authors: BT and Tessares
-Date: 20.02.2022 
+Date: 19.02.2022 
 */
 
 //
@@ -42,6 +42,7 @@ var chartWrapperOptions = {
 		title: "Mbps",
 		titleTextStyle: {color: 'white'},
 		textStyle: {color: 'white'},
+		textPosition: 'in',
 		viewWindow: {
 		  min: 0,
 		},

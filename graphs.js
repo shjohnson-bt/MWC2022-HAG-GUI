@@ -2,7 +2,7 @@
 GSMA ZTC WG MPTCP HAG throughput display graphs developed for Mobile World Congress 2022
 
 Authors: BT and Tessares
-Date: 20.02.2022 
+Date: 14.02.2022 
 */
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -73,10 +73,9 @@ function initialise() {
 		// Populate arrays for testing
 		loadData();
 	}
-	else {
-		// Start timer to retrieve HAG data
-		setInterval(getAllData, samplePeriodMs);
-	}
+
+	// Start timer to retrieve HAG data
+	setInterval(getAllData, samplePeriodMs);
 }
 
 //
@@ -90,10 +89,10 @@ function loadData()
 	totals = {raw: [], Mbps: [totalsChartHeader]};
 		
 	var thisDate;
-	var w1 = 45000;
-	var w2 = 230000;
-	var c1 = 70320;
-	var c2 = 43202;
+	var w1 = 15000;
+	var w2 = 4;
+	var c1 = 12200;
+	var c2 = 10002;
 	
 	var startDateMs = Date.now() - 60*60*1000;
 	
@@ -104,9 +103,9 @@ function loadData()
 	
 	for(i=1; i<=maxWindowSamples; i++) {
 		thisDate = new Date(startDateMs + i*1000);
-		w1 += (100+20*Math.random());
-		c1 += (80+20*Math.random());
-		w2 += (80+20*Math.random());
+		w1 += (10+2*Math.random());
+		c1 += (8+2*Math.random());
+		w2 += (0.0001*Math.random());
 		c2 += 0;
 
 		hag1.raw.push([thisDate, w1, c1]);
@@ -126,7 +125,7 @@ function loadData()
 		);
 	}
 	
-	lastRequestTime = thisDate;
+	lastRequestTimeMs = thisDate;
 }
 
 // Callback to indicate we can start drawing graphs
@@ -139,8 +138,6 @@ function chartsReadyCallback() {
     google.visualization.events.addListener(chartSliderWrapper, 'statechange', sliderStateChangeHandler);
 
 	chartsLoaded = true;
-	
-	if(testing) drawLineChart();
 }
 
 //
@@ -192,6 +189,8 @@ function getAllData()
 		hag1 = {raw: [], Mbps: [hagChartHeader]};
 		hag2 = {raw: [], Mbps: [hagChartHeader]};
 		totals = {raw: [], Mbps: [totalsChartHeader]};	
+		
+		lastStateRange = {'start':new Date(0), 'end':new Date(0)}; 
 	}
 
 	lastRequestTimeMs = Date.now();
@@ -267,6 +266,7 @@ function drawPieChart(dataArray) {
   if(volume1 < 0 || volume2 < 0) {
 	  console.log("drawPieChart: Warning - negative data, vol1=" + volume1 + ", vol2=" + volume2 +
 		", len=" + dataArray.length);
+	volume1 = volume2 = 1;
   }
   
   if(graphSelection == 2) {
@@ -395,7 +395,7 @@ function getRangeSubset(da, startDate, endDate)
 				if(startDate > da[initialStartIndex][0])
 				   for(startIndex=initialStartIndex; (startIndex < da.length -1) && (startDate > da[startIndex][0]); startIndex++);
 				else
-				   for(startIndex=initialStartIndex; (startIndex > 1) && (da[startIndex][0] >= startDate); startIndex--);
+				   for(startIndex=initialStartIndex; (startIndex > 0) && (da[startIndex][0] >= startDate); startIndex--);
 			}
 			
 			// startDate and endDates are generated using Mbps graphs, so start index must be 
@@ -459,7 +459,7 @@ function updateData(index, sec, wifi, cell) {
   //if (ds.raw.length > 1) ds.raw.shift();
   
   if (ds.Mbps.length >= maxWindowSamples) {
-	ds.raw.shift()
+	ds.raw.shift();
 	  
 	ds.Mbps.shift(); // This removes the header line, being the first element
 	// restore header on top of oldest data value 
@@ -493,6 +493,7 @@ function updateData(index, sec, wifi, cell) {
 		  //console.log("total="+totals.Mbps[totals.Mbps.length-1][1]);
 		  
 		  if (totals.Mbps.length >= maxWindowSamples) {
+			totals.raw.shift();
 			totals.Mbps.shift(); // This removes the header line, being the first element
 			// restore header on top of oldest data value 
 			totals.Mbps.splice(0,1,totalsChartHeader);
