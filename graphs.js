@@ -41,7 +41,7 @@ var dashboard, chartSliderWrapper, lineChartWrapper;
 //
 var chartsLoaded = false;
 
-var lastStateRange = {'start':new Date(0), 'end':new Date(0)}; 
+var lastStateRange;
 
 // Restrict the frequency with which PIE chart update calculations are performed
 // when invoked from the chart wrapper slider
@@ -168,6 +168,7 @@ function sliderStateChangeHandler(e) {
 // Determine if control wrapper slider start and end points are the same
 //
 function areEqual(range1, range2) {
+	if(range1.start == null || range1.end == null || range2.start == null || range2.end == null) return false;
 	if(Math.trunc(range1.start.getTime()/1000) != Math.trunc(range2.start.getTime()/1000)) return false;
 	if(Math.trunc(range1.end.getTime()/1000) != Math.trunc(range2.end.getTime()/1000)) return false;
 
@@ -190,7 +191,7 @@ function getAllData()
 		hag2 = {raw: [], Mbps: [hagChartHeader]};
 		totals = {raw: [], Mbps: [totalsChartHeader]};	
 		
-		lastStateRange = {'start':new Date(0), 'end':new Date(0)}; 
+		lastStateRange = {'start':null, 'end':null}; 
 	}
 
 	lastRequestTimeMs = Date.now();
@@ -363,12 +364,17 @@ function drawLineChart() {
 		};
 		chartSliderWrapper.setState(newState);
 	}
+	else if(lastStateRange.start == null || lastStateRange.end == null) {
+		var currentState = chartSliderWrapper.getState();
+		start = currentState.range.start;
+		end = currentState.range.end;
+	}
 	else {
 		// Preserve window if switching between device and total views
 		start = lastStateRange.start;
 		end = lastStateRange.end;
 	}
-	
+	//console.log("drawLineChart: start ep=" + start + ", end ep=" + end);
 	drawPieChart(getRangeSubset(dataSet.raw, start, end));
   }
 }
