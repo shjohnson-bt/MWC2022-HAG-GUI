@@ -355,11 +355,11 @@ function drawLineChart() {
 			// Try and ensure that the start slider is easily selectable
 			// If browser puts tab to sleep, there could be a large time interval
 			// between successive points
-			if(dataSet.Mbps.length-1 > liveWindowSizeMs/samplePeriodMs) {
-				start = dataSet.Mbps[dataSet.Mbps.length - 1 -Math.floor(liveWindowSizeMs/samplePeriodMs)][0]; 
+			if((end.getTime() - dataSet.Mbps[1][0].getTime()) > liveWindowSizeMs) {
+				start = new Date(end.getTime() - liveWindowSizeMs);
 			}
 			else {
-				start = dataSet.Mbps[1][0];
+				start = dataSet.Mbps[1][0];			
 			}
 
 			var newState = {
