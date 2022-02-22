@@ -265,9 +265,8 @@ function drawPieChart(dataArray) {
   var volume2 = dataArray[dataArray.length-1][2] - dataArray[0][2];
 
   if(volume1 < 0 || volume2 < 0) {
-	  console.log("drawPieChart: Warning - negative data, vol1=" + volume1 + ", vol2=" + volume2 +
-		", len=" + dataArray.length);
-	volume1 = volume2 = 1;
+    console.log("drawPieChart: Warning - negative data, vol1=" + volume1 + ", vol2=" + volume2 +
+			    ", len=" + dataArray.length);
   }
   
   if(graphSelection == 2) {
@@ -275,6 +274,10 @@ function drawPieChart(dataArray) {
 	  label_1 = hag_label_1;
 	  label_2 = hag_label_2;
 
+	  if(volume1 < 0 || volume2 < 0) {
+		volume1 = volume2 = 0;
+	  }
+	  
       var intervalMs = dataArray[dataArray.length-1][0].getTime() - dataArray[0][0].getTime();
 	  if(intervalMs > 0) {
 		  ratio1 = 1000*volume1/intervalMs;
@@ -306,8 +309,14 @@ function drawPieChart(dataArray) {
   else {
 	  label_1 = "Wi-Fi";
 	  label_2 = "Cellular";
-	  ratio1 = volume1/(volume1 + volume2);  
-	  ratio2 = 1 - ratio1;
+	  
+	  if(volume1 <= 0 || volume2 <= 0) {
+		ratio1 = ratio2 = 0.5;
+	  }
+	  else {
+		ratio1 = volume1/(volume1 + volume2);  
+	    ratio2 = 1 - ratio1;
+	  }
   }
   
   var pies = google.visualization.arrayToDataTable([
