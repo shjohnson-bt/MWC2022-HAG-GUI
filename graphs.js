@@ -283,27 +283,25 @@ function drawPieChart(dataArray) {
 	  else {
 		  ratio1 = ratio2 = 0;
 	  }
-	  if(ratio1 < 0.0000001 && ratio2 < 0.0000001) {
-		  // Ensure totals chart displays something
-		  ratio1 = ratio2 = 0.01;
-		  totalsUnits = "bps";
+	  
+	  if(ratio1 > 1.0 || ratio2 > 1.0) {
+		  totalsUnits = "Mbps";
 	  }
-	  else if(ratio1 < 0.00001 && ratio2 < 0.00001) {
-		  // Ensure totals chart displays something
-		  ratio1 *= 1000000;
-		  ratio2 *= 1000000;
-		  totalsUnits = "bps";
-	  }
-	  else if(ratio1 < 0.01 && ratio2 < 0.01) {
-		  // Scale values for Kbps
+	  else if(ratio1 > 0.001 || ratio2 > 0.001) {
 		  ratio1 *= 1000;
 		  ratio2 *= 1000;
 		  totalsUnits = "Kbps";
 	  }
+	  else if(ratio1 > 0.000001 || ratio2 > 0.000001) {
+		  ratio1 *= 1000000;
+		  ratio2 *= 1000000;
+		  totalsUnits = "bps";
+	  }
 	  else {
-		  // Default is to display Mbps
-		  totalsUnits = "Mbps";
- 	  }		  
+		  // Ensure totals chart displays something
+		  ratio1 = ratio2 = 0.01;
+		  totalsUnits = "bps";
+	  }  
   }
   else {
 	  label_1 = "Wi-Fi";
