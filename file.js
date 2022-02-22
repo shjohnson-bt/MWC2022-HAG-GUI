@@ -2,16 +2,15 @@
 GSMA ZTC WG MPTCP HAG throughput display graphs developed for Mobile World Congress 2022
 
 Authors: BT and Tessares
-Date: 21.02.2022 
+Date: 22.02.2022 
 */
-
 
 const delimiter = ",";
 
 function saveit() {
 	var d = new Date();
 	export_csv(
-	    "raw-data-" + 
+		"raw-data-" + 
 		d.getUTCFullYear() + 
 		(d.getUTCMonth() + 1).toString().padStart(2,0) + 
 		d.getDate().toString().padStart(2,0) +
@@ -23,18 +22,16 @@ function saveit() {
 
 function export_csv(fileName) 
 {
-	
 	const arrayHeader = [
 		"Time", 
 		"w1_raw", "c1_raw", "w1_mbps", "c1_mbps", 
 		"w2_raw", "c2_raw", "w2_mbps", "c2_mbps", 
 		"t1_raw", "t2_raw", "t1_mbps", "t2_mbps"
-	];
+		];
 
 	let header = arrayHeader.join(delimiter) + '\n';
 	let csvData = new Blob([header], { type: 'text/csv' }); 
-	
-    var allData = [];
+
 	for(i=0; i<hag1.raw.length-1; i++)
 	{
 		var csv = "";
@@ -58,7 +55,7 @@ function export_csv(fileName)
 			csv += totals.Mbps[i][1] + delimiter + totals.Mbps[i][2] + delimiter;
 			csv += '\n';
 		}
-		
+
 		csvData = new Blob([csvData, csv], { type: 'text/csv' }); 
 	}
 

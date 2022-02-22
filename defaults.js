@@ -2,17 +2,29 @@
 GSMA ZTC WG MPTCP HAG throughput display graphs developed for Mobile World Congress 2022
 
 Authors: BT and Tessares
-Date: 20.02.2022 
+Date: 22.02.2022 
 */
 
 //
 // HAG URLs
 //
-
 const urls = [
-   "http://xxx.xxx.xxx.xxx:port/",
-   "http://yyy.yyy.yyy.yyy:port/"
+	"http://15.160.170.210:80/",
+	"http://15.160.152.232:80/"
 ];
+
+/*
+const urls = [
+	"http://18.132.68.91:8000/",
+	"http://18.132.68.91:8000/"
+];
+*/
+/*
+const urls = [
+	"http://xxx.xxx.xxx.xxx:port/",
+	"http://yyy.yyy.yyy.yyy:port/"
+];
+*/
 
 
 //
@@ -30,8 +42,8 @@ const hagPieChartTitle = " split";
 const hagChartHeader     = ['Time', 'Wi-Fi', 'Cellular'];
 const hagLineChartColours    = ['royalblue','crimson'];
 const hagPieChartStyles = [
-{color: 'royalblue', textStyle :{color: 'white'}},
-{color: 'crimson', textStyle :{color: 'white'}}
+	{color: 'royalblue', textStyle :{color: 'white'}},
+	{color: 'crimson', textStyle :{color: 'white'}}
 ];
 
 // Totals charts - combined throughput (wifi+cellular) for each hag
@@ -41,8 +53,8 @@ const totalsPieChartTitle = "Average throughput";
 const totalsChartHeader  = ['Time', hag_label_1, hag_label_2];
 const totalsLineChartColours = ['yellow','orange'];
 const totalsPieChartStyles = [
-{color: 'yellow', textStyle :{color: 'black'}},
-{color: 'orange', textStyle :{color: 'white'}}
+	{color: 'yellow', textStyle :{color: 'black'}},
+	{color: 'orange', textStyle :{color: 'white'}}
 ];
 
 
